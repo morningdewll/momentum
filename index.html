@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Momentum</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Momentum" />
+  <meta name="theme-color" content="#1a1a1a" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f7f7f5; color: #1a1a1a; min-height: 100vh;
+      padding: 2rem 1rem 5rem; display: flex; justify-content: center;
+    }
+    .app { width: 100%; max-width: 500px; }
+    .app-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+    .app-sub { font-size: 13px; color: #999; margin-top: 2px; margin-bottom: 2rem; }
+
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+    .stat-card { background: #fff; border: 1px solid #ebebeb; border-radius: 12px; padding: 14px 16px; }
+    .stat-value { font-size: 22px; font-weight: 700; color: #1a1a1a; }
+    .stat-label { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+    .section { background: #fff; border: 1px solid #ebebeb; border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem; }
+    .section-title { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 1rem; }
+
+    .mood-row { display: flex; gap: 8px; }
+    .mood-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 14px 4px; border-radius: 10px; border: 1px solid #ebebeb;
+      background: #fafaf9; cursor: pointer; transition: all 0.15s;
+    }
+    .mood-btn:hover { background: #f0f0ee; border-color: #ccc; }
+    .mood-btn.selected { background: #1a1a1a; border-color: #1a1a1a; }
+    .mood-btn.selected .mood-num { color: #fff; }
+    .mood-btn.selected .mood-word { color: #888; }
+    .mood-num { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+    .mood-word { font-size: 10px; color: #bbb; }
+
+    textarea {
+      width: 100%; font-size: 14px; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid #ebebeb; background: #fafaf9; color: #1a1a1a;
+      resize: none; font-family: inherit; line-height: 1.6; outline: none;
+      transition: border-color 0.15s; margin-top: 1rem;
+    }
+    textarea:focus { border-color: #ccc; }
+    textarea::placeholder { color: #ccc; }
+    .text-input {
+      width: 100%; font-size: 14px; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid #ebebeb; background: #fafaf9; color: #1a1a1a;
+      font-family: inherit; line-height: 1.6; outline: none;
+      transition: border-color 0.15s;
+    }
+    .text-input:focus { border-color: #ccc; }
+    .text-input::placeholder { color: #ccc; }
+
+    .btn {
+      width: 100%; padding: 12px; font-size: 14px; font-weight: 600;
+      border-radius: 10px; border: none; background: #1a1a1a; color: #fff;
+      cursor: pointer; transition: all 0.15s; margin-top: 1rem;
+    }
+    .btn:hover { background: #333; }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* Activity card */
+    .activity-wrap { margin-top: 1rem; }
+    .activity-card {
+      background: #f0faf5; border: 1px solid #b7e4c7;
+      border-radius: 12px; padding: 1rem 1.25rem;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      animation: fadeUp 0.3s ease;
+    }
+    .activity-card.fading { opacity: 0; transform: translateY(-4px); pointer-events: none; }
+    .activity-label { font-size: 11px; color: #52b788; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+    .activity-title { font-size: 15px; font-weight: 600; color: #1a1a1a; line-height: 1.5; margin-bottom: 6px; }
+    .activity-why { font-size: 12px; color: #74c69d; line-height: 1.5; margin-bottom: 12px; }
+    .activity-divider { height: 1px; background: #b7e4c7; margin: 12px 0; }
+    .activity-instructions-label { font-size: 11px; color: #52b788; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+    .activity-instructions { font-size: 13px; color: #2d4a3e; line-height: 1.7; margin-bottom: 12px; }
+    .benefit-row { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+    .benefit-label { font-size: 11px; color: #74c69d; }
+    .benefit-dots { display: flex; gap: 3px; }
+    .benefit-dot { width: 7px; height: 7px; border-radius: 50%; background: #b7e4c7; }
+    .benefit-dot.filled { background: #2d6a4f; }
+
+    .act-row { display: flex; gap: 8px; margin-top: 10px; }
+    .act-btn {
+      flex: 1; padding: 9px 8px; font-size: 12px; font-weight: 500; border-radius: 8px;
+      border: 1px solid #b7e4c7; background: transparent; color: #2d6a4f;
+      cursor: pointer; transition: all 0.15s; text-align: center;
+    }
+    .act-btn:hover { background: #d8f3dc; }
+    .act-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .act-btn.primary { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
+    .act-btn.primary:hover { background: #245a40; }
+    .act-btn.completed { background: #1a1a1a; color: #fff; border-color: #1a1a1a; cursor: default; }
+
+    .do-another-wrap { margin-top: 1rem; animation: fadeUp 0.3s ease; }
+    .do-another-btn {
+      width: 100%; padding: 10px; font-size: 13px; font-weight: 500;
+      border-radius: 10px; border: 1px solid #b7e4c7; background: transparent;
+      color: #2d6a4f; cursor: pointer; transition: all 0.15s;
+    }
+    .do-another-btn:hover { background: #f0faf5; }
+    .activity-done-msg { font-size: 13px; color: #aaa; text-align: center; padding: 0.75rem 0; }
+
+    /* Onboarding */
+    .onboard-card {
+      background: #fff8e1; border: 1px solid #ffe082;
+      border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1rem;
+      animation: fadeUp 0.3s ease;
+    }
+    .onboard-label { font-size: 11px; color: #b8860b; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+    .onboard-q { font-size: 14px; font-weight: 500; color: #1a1a1a; margin-bottom: 10px; }
+    .pref-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pref-btn {
+      padding: 8px 14px; border-radius: 8px; border: 1px solid #ffe082;
+      background: transparent; color: #b8860b; font-size: 13px; cursor: pointer; transition: all 0.15s;
+    }
+    .pref-btn:hover { background: #fff3cd; }
+    .pref-btn.selected { background: #b8860b; color: #fff; border-color: #b8860b; }
+
+    /* Logged state */
+    .logged-state { text-align: center; padding: 1.25rem 0; }
+    .logged-score { font-size: 28px; font-weight: 700; color: #1a1a1a; }
+    .logged-word { font-size: 13px; color: #aaa; margin-top: 2px; }
+    .logged-note { font-size: 13px; color: #bbb; margin-top: 10px; font-style: italic; }
+
+    /* Chart */
+    .chart-wrap { position: relative; height: 150px; margin-bottom: 8px; }
+    .chart-labels { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .chart-label { font-size: 10px; color: #ccc; }
+    .zone-legend { display: flex; gap: 12px; }
+    .zone-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #aaa; }
+    .zone-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+    /* Calendar */
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .cal-day { aspect-ratio: 1; border-radius: 4px; background: #f0f0ee; }
+    .cal-day.m1 { background: #ffd6d6; }
+    .cal-day.m2 { background: #ffc2a0; }
+    .cal-day.m3 { background: #ffe082; }
+    .cal-day.m4 { background: #b7e4c7; }
+    .cal-day.m5 { background: #74c69d; }
+    .cal-day.today { outline: 2px solid #1a1a1a; outline-offset: -2px; }
+    .cal-legend { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+    .cal-legend-label { font-size: 10px; color: #bbb; }
+    .cal-legend-dots { display: flex; gap: 3px; }
+    .cal-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+    /* Wins */
+    .win-input-row { display: flex; gap: 8px; }
+    .win-input-row .text-input { flex: 1; }
+    .win-add-btn {
+      padding: 10px 16px; font-size: 13px; font-weight: 600;
+      border-radius: 8px; border: none; background: #1a1a1a; color: #fff;
+      cursor: pointer; white-space: nowrap; transition: background 0.15s;
+    }
+    .win-add-btn:hover { background: #333; }
+    .wins-list { margin-top: 1rem; display: flex; flex-direction: column; gap: 8px; }
+    .win-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f5f5f3; }
+    .win-item:last-child { border-bottom: none; }
+    .win-icon { font-size: 14px; color: #74c69d; margin-top: 1px; }
+    .win-text { font-size: 14px; color: #1a1a1a; line-height: 1.5; flex: 1; }
+    .win-date { font-size: 11px; color: #ccc; margin-top: 2px; }
+    .wins-empty { font-size: 13px; color: #ccc; text-align: center; padding: 1rem 0; }
+
+    /* Badges */
+    .badges-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+    .badge {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 12px 14px; border-radius: 10px; border: 1px solid #ebebeb;
+      background: #fafaf9; min-width: 70px;
+    }
+    .badge.earned { background: #fff8e1; border-color: #ffe082; }
+    .badge-icon { font-size: 20px; }
+    .badge-name { font-size: 10px; color: #aaa; text-align: center; }
+    .badge.earned .badge-name { color: #b8860b; }
+
+    .toast {
+      position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 99px;
+      font-size: 13px; font-weight: 500; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none; white-space: nowrap; z-index: 999;
+    }
+    .toast.show { opacity: 1; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <h1 class="app-title">Momentum</h1>
+  <p class="app-sub">Track your mood. See your progress.</p>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value" id="totalCount">0</div><div class="stat-label">Total check-ins</div></div>
+    <div class="stat-card"><div class="stat-value" id="consistencyScore">0%</div><div class="stat-label">Last 30 days</div></div>
+    <div class="stat-card"><div class="stat-value" id="avgMood">—</div><div class="stat-label">Avg mood (7d)</div></div>
+  </div>
+
+  <div class="section">
+    <p class="section-title">Today's check-in</p>
+    <div id="checkinContent">
+      <div class="mood-row">
+        <button class="mood-btn" onclick="selectMood(1)" id="m1"><span class="mood-num">1</span><span class="mood-word">rough</span></button>
+        <button class="mood-btn" onclick="selectMood(2)" id="m2"><span class="mood-num">2</span><span class="mood-word">low</span></button>
+        <button class="mood-btn" onclick="selectMood(3)" id="m3"><span class="mood-num">3</span><span class="mood-word">okay</span></button>
+        <button class="mood-btn" onclick="selectMood(4)" id="m4"><span class="mood-num">4</span><span class="mood-word">good</span></button>
+        <button class="mood-btn" onclick="selectMood(5)" id="m5"><span class="mood-num">5</span><span class="mood-word">great</span></button>
+      </div>
+      <textarea id="note" rows="2" placeholder="Anything on your mind? (optional)"></textarea>
+      <button class="btn" id="submitBtn" onclick="submitCheckin()" disabled>Log check-in</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="section-title">Your trajectory</p>
+    <div class="chart-wrap"><canvas id="moodChart" height="150"></canvas></div>
+    <div class="chart-labels" id="chartLabels"></div>
+    <div class="zone-legend" style="margin-top:10px;">
+      <div class="zone-item"><div class="zone-dot" style="background:#d8f3dc"></div>Thriving</div>
+      <div class="zone-item"><div class="zone-dot" style="background:#fff9db"></div>Watch</div>
+      <div class="zone-item"><div class="zone-dot" style="background:#ffe3e3"></div>Struggling</div>
+      <div class="zone-item"><div class="zone-dot" style="background:#ccc;opacity:0.5"></div>Projected</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="section-title">Last 30 days</p>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <span class="cal-legend-label">Mood</span>
+      <div class="cal-legend-dots">
+        <div class="cal-dot" style="background:#ffd6d6"></div>
+        <div class="cal-dot" style="background:#ffc2a0"></div>
+        <div class="cal-dot" style="background:#ffe082"></div>
+        <div class="cal-dot" style="background:#b7e4c7"></div>
+        <div class="cal-dot" style="background:#74c69d"></div>
+      </div>
+      <span class="cal-legend-label">1 → 5</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="section-title">Wins log</p>
+    <div class="win-input-row">
+      <input type="text" class="text-input" id="winInput" placeholder="Something that went okay today..." onkeydown="if(event.key==='Enter') addWin()" />
+      <button class="win-add-btn" onclick="addWin()">Add</button>
+    </div>
+    <div class="wins-list" id="winsList"></div>
+  </div>
+
+  <div class="section">
+    <p class="section-title">Milestones</p>
+    <div class="badges-grid" id="badgesGrid"></div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  const KEYS = {
+    entries:  'momentum_v3',
+    wins:     'momentum_wins',
+    badges:   'momentum_badges',
+    pref:     'momentum_pref',
+  };
+  const MAX_ACTIVITIES = 3;
+  const MAX_REROLLS    = 2;
+  const MOOD_WORDS     = ['','rough','low','okay','good','great'];
+  let selectedMood     = null;
+  let shownActivities  = [];
+
+  const MILESTONES = [
+    { id: 'first',   icon: '★', name: 'First step',    threshold: 1   },
+    { id: 'seven',   icon: '◆', name: '7 check-ins',   threshold: 7   },
+    { id: 'thirty',  icon: '●', name: '30 check-ins',  threshold: 30  },
+    { id: 'fifty',   icon: '▲', name: '50 check-ins',  threshold: 50  },
+    { id: 'hundred', icon: '♦', name: '100 check-ins', threshold: 100 },
+  ];
+
+  /* benefit: 1=light, 2=moderate, 3=strong (research-backed impact on mood trajectory)
+     instructions: specific steps to actually do the activity */
+  const ACTIVITIES = {
+    1: {
+      physical: [
+        { text: 'Step outside for 60 seconds', why: 'Natural light and movement break cortisol patterns even briefly.',
+          instructions: 'Literally just open your door and stand outside. No shoes required. Look at the sky or the street. Take one slow breath of outside air. That\'s it — 60 seconds and you\'re done.', benefit: 1 },
+        { text: 'Splash cold water on your face', why: 'Activates the diving reflex — rapidly lowers heart rate within seconds.',
+          instructions: 'Go to your sink. Run cold water — the colder the better. Cup your hands and splash your face 3 times. Let the water sit for a moment before drying off. Notice if anything shifts.', benefit: 2 },
+        { text: 'Stretch your arms above your head for 30 seconds', why: 'Releases tension held in the chest and shoulders, common in low mood.',
+          instructions: 'Sit or stand. Interlace your fingers and push your palms toward the ceiling. Hold for 10 seconds, release, repeat twice. Try adding a slow exhale at the top of each stretch.', benefit: 1 },
+      ],
+      creative: [
+        { text: 'Write one word that describes how you feel', why: 'Naming an emotion reduces its intensity — research calls this "affect labeling."',
+          instructions: 'Grab your phone notes or any piece of paper. Don\'t overthink it — write the first word that comes. You\'re not journaling. You\'re just naming it. One word is enough.', benefit: 1 },
+        { text: 'Doodle one shape on paper', why: 'Activates different neural pathways than analytical thinking, giving the mind relief.',
+          instructions: 'Find any pen and paper. Draw a circle, a spiral, a square — anything. Then fill it in, shade it, or add lines to it. No artistic ability needed. Just let your hand move without judging the result.', benefit: 1 },
+        { text: 'Take one photo of something near you', why: 'Shifts attention outward — breaks the internal loop depression creates.',
+          instructions: 'Look around wherever you are. Find something — a texture, a shadow, an object — that you\'ve never really looked at closely. Take a photo of it. Look at it for a few seconds after. That\'s the whole thing.', benefit: 1 },
+      ],
+      social: [
+        { text: 'Send a single emoji to someone you trust', why: 'Micro-connections still activate the social reward system, even when words feel hard.',
+          instructions: 'Open your messages. Think of one person who wouldn\'t need an explanation. Send them a single emoji — whatever feels honest. You don\'t have to explain it. You don\'t have to respond if they reply.', benefit: 1 },
+        { text: 'Read an old message from someone who cares about you', why: 'Revisiting genuine connection provides evidence that counters depressive thinking.',
+          instructions: 'Go to your messages and find a conversation from someone who has shown up for you before. Scroll back a little and read a few exchanges. Let the evidence sit there — you don\'t have to feel better immediately.', benefit: 1 },
+      ],
+      spiritual: [
+        { text: 'Take 3 slow breaths — 4 counts in, 7 hold, 8 out', why: 'The 4-7-8 breath activates your parasympathetic nervous system in under 90 seconds.',
+          instructions: 'Breathe in through your nose for 4 counts. Hold for 7. Exhale slowly through your mouth for 8 counts. Do this 3 times. If your mind wanders, just return to the count — that\'s normal and still works.', benefit: 2 },
+        { text: 'Sit quietly for 2 minutes without your phone', why: 'Even brief stillness interrupts the rumination loop that deepens low mood.',
+          instructions: 'Set a timer for 2 minutes. Put your phone face down. Sit comfortably — on a chair, your bed, the floor. You don\'t have to meditate. Just sit. When thoughts come, let them pass. Two minutes.', benefit: 1 },
+        { text: 'Read one line from something that grounds you', why: 'Anchoring to something meaningful provides perspective when the mind narrows.',
+          instructions: 'Open a book, a Bible, a note — something that has meant something to you before. Find one line that lands and read it slowly twice. You don\'t have to feel moved. Just read it.', benefit: 1 },
+      ],
+      general: [
+        { text: 'Splash cold water on your face', why: 'Activates the diving reflex — rapidly lowers heart rate within seconds.',
+          instructions: 'Go to your sink. Run cold water — the colder the better. Cup your hands and splash your face 3 times. Let the water sit for a moment before drying off.', benefit: 2 },
+        { text: 'Step outside for 60 seconds', why: 'Natural light and air shift the nervous system, even briefly.',
+          instructions: 'Open your door and stand outside. No shoes required. Look at the sky. Take one slow breath. 60 seconds and you\'re done.', benefit: 1 },
+        { text: 'Take 3 slow breaths — 4 counts in, 7 hold, 8 out', why: 'Activates your parasympathetic nervous system in under 90 seconds.',
+          instructions: 'Breathe in for 4 counts. Hold for 7. Exhale for 8. Repeat 3 times. Return to counting if your mind wanders.', benefit: 2 },
+      ],
+    },
+    2: {
+      physical: [
+        { text: 'Walk to the end of your street and back', why: 'Even 5 minutes of walking releases BDNF — a protein that repairs stress-damaged neural pathways.',
+          instructions: 'Put on shoes. Walk out your front door and to the end of your street. Turn around. Walk back. You don\'t need a destination, a pace, or a playlist. Just go and return.', benefit: 2 },
+        { text: 'Tidy one surface — just one', why: 'Small acts of completion create disproportionate feelings of control and accomplishment.',
+          instructions: 'Pick one surface — your desk, a nightstand, the kitchen counter. Set a 5-minute timer. Clear it, wipe it if you can, put things where they belong. Stop when the timer goes off, even if it\'s not perfect.', benefit: 2 },
+        { text: 'Drink a full glass of water slowly', why: 'Dehydration worsens mood and cognition — often overlooked in low periods.',
+          instructions: 'Fill a full glass of water. Sit down. Drink it slowly — not all at once. Notice the temperature. Take 3-4 minutes to finish it. This is slower than it sounds and that\'s the point.', benefit: 1 },
+      ],
+      creative: [
+        { text: 'Write 3 words describing your day', why: 'Low-friction reflection builds the journaling habit without the pressure of full entries.',
+          instructions: 'Open your phone notes. Type 3 words — not sentences, just words — that describe today. They don\'t have to be related or make sense together. Just three honest words.', benefit: 1 },
+        { text: 'Put on one song that doesn\'t feel heavy', why: 'Music changes neurochemistry within minutes — rhythm especially affects mood regulation.',
+          instructions: 'Think of one song that doesn\'t carry weight right now — something neutral or light. Play it from start to finish without doing anything else. Just let it play.', benefit: 2 },
+        { text: 'Sketch something in front of you', why: 'Observational drawing shifts the brain from narrative to perceptual mode — a genuine reset.',
+          instructions: 'Look at something near you — a cup, a shoe, a window. Draw it roughly on paper or in your phone notes. Don\'t try to make it accurate. The point is looking, not the drawing.', benefit: 1 },
+      ],
+      social: [
+        { text: 'Text one person something small', why: 'Even low-effort connection counters the withdrawal pattern that deepens depression.',
+          instructions: 'Pick one person. Send them something brief — "thinking of you" or "how\'s your week going" or even just a meme. You don\'t need to explain how you\'re feeling. Just reach out once.', benefit: 2 },
+        { text: 'Watch a short video from a creator who makes you feel okay', why: 'Parasocial warmth still registers in the social brain. It\'s not a replacement, but it helps.',
+          instructions: 'Find one YouTube or TikTok creator whose content feels warm or grounding. Watch one video from start to finish. Don\'t scroll before or after — just that one video.', benefit: 1 },
+      ],
+      spiritual: [
+        { text: 'Write down one thing that happened today', why: 'Logging a single event grounds you in reality, countering depression\'s distortion of time.',
+          instructions: 'One sentence. It can be completely mundane — "I made coffee" counts. Write it down somewhere. The act of recording something true about your day is the whole point.', benefit: 1 },
+        { text: 'Spend 3 minutes in prayer or quiet reflection', why: 'Intentional stillness with purpose activates restorative neural states.',
+          instructions: 'Find a quiet spot. Set a 3-minute timer. Pray, reflect, or just hold something in mind that matters to you. If thoughts drift, gently return. End when the timer goes off.', benefit: 2 },
+        { text: 'Step outside and look at the sky for a minute', why: 'Expanding visual field downregulates the threat system. The horizon literally calms the brain.',
+          instructions: 'Go outside. Look up. Not at your phone, not at people — at the sky. Notice the color, the clouds or lack of them, the light. Stay for a full minute before going back in.', benefit: 1 },
+      ],
+      general: [
+        { text: 'Walk to the end of your street and back', why: 'Even 5 minutes of movement releases BDNF — a protein that repairs stress-damaged neural pathways.',
+          instructions: 'Put on shoes. Walk out your front door and to the end of your street. Turn around. Walk back. No destination, no pace required.', benefit: 2 },
+        { text: 'Tidy one surface — just one', why: 'Small completions create disproportionate feelings of control.',
+          instructions: 'Pick one surface. Set a 5-minute timer. Clear it. Stop when the timer goes off — perfect is not the goal.', benefit: 2 },
+        { text: 'Text one person something small', why: 'Low-effort connection counters the withdrawal loop depression creates.',
+          instructions: 'Pick one person. Send something brief. You don\'t need to explain how you\'re feeling.', benefit: 2 },
+      ],
+    },
+    3: {
+      physical: [
+        { text: 'Take a 10-minute walk outside', why: 'Ten minutes of walking produces measurable mood elevation — the most accessible antidepressant available.',
+          instructions: 'Set a 10-minute timer. Walk outside in any direction — no destination needed. When the timer goes off you can turn back. Walk at whatever pace feels natural. No headphones required, but fine if you want them.', benefit: 3 },
+        { text: 'Do 5 minutes of stretching', why: 'Releasing physical tension stored in the body directly lowers cortisol levels.',
+          instructions: 'Set a 5-minute timer. Start with your neck (slow side to side), then shoulders, then a seated forward fold if you can. Hold each stretch 20-30 seconds. Breathe through them — exhale into the stretch.', benefit: 2 },
+        { text: 'Make yourself a proper meal and sit down to eat it', why: 'Nourishment combined with intentional pause activates the rest-and-digest state.',
+          instructions: 'Cook or prepare something real — not just a snack. Then sit somewhere away from screens to eat it. Give yourself the full time it takes to finish. Notice the taste.', benefit: 2 },
+      ],
+      creative: [
+        { text: 'Journal one win from today — even something small', why: 'Specific positive recall counters depression\'s negativity bias and rewires attention over time.',
+          instructions: 'Open a notes app or notebook. Write one thing that went okay today — be specific. "I responded to that email" is better than "I was productive." One specific thing. Read it back once after writing it.', benefit: 2 },
+        { text: 'Work on something creative for 10 minutes without judging it', why: 'Flow state — even briefly — is one of the strongest natural mood elevators known.',
+          instructions: 'Pick anything — writing, drawing, editing a video clip, humming a melody. Set a 10-minute timer. Begin without deciding if it\'s good. The rule is: no judgment until the timer goes off. Then stop.', benefit: 3 },
+        { text: 'Listen to a full song you love with no distractions', why: 'Intentional music listening is more restorative than passive background listening.',
+          instructions: 'Pick a song you genuinely love — not background music, something that matters to you. Put your phone down. Close your eyes if that feels right. Listen all the way through without doing anything else.', benefit: 2 },
+      ],
+      social: [
+        { text: 'Have a real conversation with someone today', why: 'Phone or in-person conversation activates oxytocin more significantly than texting.',
+          instructions: 'Call or meet one person — not text. It doesn\'t have to be a deep conversation. Ask them how they\'re actually doing and listen to the answer. 10 minutes is enough.', benefit: 3 },
+        { text: 'Check in on someone else today', why: 'Directing attention outward interrupts self-focused rumination, a core depression pattern.',
+          instructions: 'Think of someone who might be going through something. Text or call them specifically to ask how they\'re doing — not to share your own situation. Just check on them.', benefit: 2 },
+      ],
+      spiritual: [
+        { text: 'Write 3 specific things that went okay today', why: 'Specificity matters — "the coffee was good" rewires more effectively than vague gratitude.',
+          instructions: 'Three things. Each one must be specific — a name, a moment, a small detail. "I talked to Marcus" beats "I\'m grateful for friends." Write them down. Read them back once before closing.', benefit: 2 },
+        { text: 'Spend 10 minutes reading something that isn\'t a screen', why: 'Focused reading activates prefrontal function that depression tends to suppress.',
+          instructions: 'Find a physical book or print something out. Set a 10-minute timer. Read continuously — when your mind wanders, find your place again and keep going. No skimming, no highlights. Just read.', benefit: 2 },
+        { text: 'Reflect on one moment today where you showed up', why: 'Self-recognition builds the self-efficacy that depression systematically erodes.',
+          instructions: 'Think back through your day. Find one moment where you did something — anything — despite not wanting to. Write it down or say it out loud. Acknowledge it as real without minimizing it.', benefit: 2 },
+      ],
+      general: [
+        { text: 'Take a 10-minute walk outside', why: 'The most accessible mood intervention available — backed by decades of research.',
+          instructions: 'Set a 10-minute timer. Walk outside in any direction. When the timer goes off, turn back. No pace, no destination required.', benefit: 3 },
+        { text: 'Journal one win from today — even something small', why: 'Specific positive recall counters negativity bias over time.',
+          instructions: 'Write one specific thing that went okay today. Read it back once. One thing is enough.', benefit: 2 },
+        { text: 'Have a real conversation with someone today', why: 'Human connection activates restorative neurochemistry that no other activity replicates.',
+          instructions: 'Call or meet one person. Ask how they\'re actually doing. Listen. 10 minutes is enough.', benefit: 3 },
+      ],
+    },
+    4: {
+      physical: [
+        { text: 'Go for a 20-minute walk or workout', why: 'At this mood level your body can handle more — capitalizing on good days builds resilience.',
+          instructions: 'Set a 20-minute timer. Walk briskly, run, or do any movement that elevates your heart rate slightly. Push a little harder than feels completely comfortable. Your body can handle it today.', benefit: 3 },
+        { text: 'Cook a proper meal from scratch', why: 'Completion of a multi-step task at a higher mood reinforces capability and routine.',
+          instructions: 'Find a recipe that takes at least 20 minutes to make — something with actual ingredients. Cook it fully. Then sit down and eat it without your phone. The process matters as much as the meal.', benefit: 2 },
+        { text: 'Get 10 minutes of morning sunlight', why: 'Morning light sets circadian rhythm, which directly regulates mood and sleep quality.',
+          instructions: 'Go outside within an hour of waking up. Stand in direct sunlight — not behind glass — for 10 minutes. No sunglasses. You can walk, stretch, or just stand. This works best before 10am.', benefit: 3 },
+      ],
+      creative: [
+        { text: 'Work on a project you\'ve been putting off for 20 minutes', why: 'Good mood days are when avoidance is easiest to break — the return is highest here.',
+          instructions: 'Pick the one thing you\'ve been avoiding most. Set a 20-minute timer. Start it — not plan it, start it. When the timer goes off you can stop. Most of the time you won\'t want to.', benefit: 3 },
+        { text: 'Create something and share it with one person', why: 'Creative vulnerability builds connection and reinforces creative identity.',
+          instructions: 'Make something small — a video clip, a drawing, a piece of writing. Send it to one person whose opinion matters to you with no explanation. Just "made this."', benefit: 3 },
+        { text: 'Start something you\'ve been curious about', why: 'Novel engagement on good days builds neural pathways that sustain mood longer.',
+          instructions: 'Think of something you\'ve been meaning to try or learn. Spend 20 minutes on the very first step — not researching it, doing it. Just begin.', benefit: 2 },
+      ],
+      social: [
+        { text: 'Reach out to someone you haven\'t spoken to in a while', why: 'Maintaining social bonds during good periods makes them available during difficult ones.',
+          instructions: 'Think of someone you\'ve lost touch with but value. Send them a real message — not just "hey" — something that references a shared memory or asks a genuine question. Reconnect intentionally.', benefit: 2 },
+        { text: 'Do something kind for someone without being asked', why: 'Acts of service are one of the most consistent mood elevators across cultures and studies.',
+          instructions: 'Think of one person in your life. Do something for them today that they didn\'t ask for and won\'t expect. Keep it small and genuine. Don\'t mention that you did it.', benefit: 3 },
+      ],
+      spiritual: [
+        { text: 'Spend time in prayer, reflection, or gratitude journaling', why: 'Intentional practice during good periods deepens the habit and makes it accessible when hard.',
+          instructions: 'Set aside 15 minutes. Pray, reflect, or write — whichever form is most natural to you. Be specific rather than general. Name things, name people, name moments. Don\'t rush.', benefit: 2 },
+        { text: 'Reflect on what contributed to feeling good today', why: 'Identifying what helped creates a personal map you can return to in harder moments.',
+          instructions: 'Write down the things that contributed to today feeling okay or good. Be specific — times, people, actions. You\'re building a personal evidence base for what actually helps you.', benefit: 3 },
+      ],
+      general: [
+        { text: 'Go for a 20-minute walk or workout', why: 'Good mood days are when physical investment has the highest long-term return.',
+          instructions: 'Set a 20-minute timer. Walk, run, or move at an elevated pace. Push slightly harder than comfortable today.', benefit: 3 },
+        { text: 'Do something kind for someone without being asked', why: 'Acts of service are one of the most consistent mood elevators known.',
+          instructions: 'Think of one person. Do something small for them they didn\'t ask for. Don\'t mention it.', benefit: 3 },
+        { text: 'Reflect on what contributed to feeling good today', why: 'Building your personal map of what helps is one of the most powerful tools in recovery.',
+          instructions: 'Write down the specific things that made today feel okay. Times, people, actions. Be specific — this is data you\'ll want later.', benefit: 3 },
+      ],
+    },
+    5: {
+      physical: [
+        { text: 'Push yourself with a workout or go somewhere new outdoors', why: 'Peak mood is when the body can handle challenge — residual benefit lasts days.',
+          instructions: 'Go hard today. Run a route you haven\'t tried, lift heavier than usual, or go somewhere new on foot. High mood means high capacity — use it physically and let your body remember what it can do.', benefit: 3 },
+        { text: 'Try a physical activity you\'ve been curious about', why: 'Novel physical challenges build confidence that carries into harder periods.',
+          instructions: 'Pick something you\'ve thought about trying — a sport, a trail, a class. Today is the right day. Make a plan and execute it, or just show up somewhere and do it.', benefit: 3 },
+      ],
+      creative: [
+        { text: 'Start the creative project you\'ve been delaying', why: 'Your best creative work happens when you lean into high-energy moments.',
+          instructions: 'Name the project you\'ve been putting off. Open your laptop, your camera, your notebook — whatever it needs. Start with the hardest part first. Give it at least 30 minutes of real effort today.', benefit: 3 },
+        { text: 'Teach someone something you know well', why: 'Teaching consolidates your own understanding and creates deep social satisfaction.',
+          instructions: 'Think of something you know that someone in your life could benefit from. Reach out to them today and offer to share it — a conversation, a video, a message. Make it concrete and specific.', benefit: 3 },
+        { text: 'Share something you made with your audience or community', why: 'Creative output during peak states builds the momentum that sustains motivation.',
+          instructions: 'Find something you\'ve created — even something old or unfinished. Post it, send it, or share it somewhere it can land. The act of releasing it matters more than its perfection.', benefit: 3 },
+      ],
+      social: [
+        { text: 'Deepen a relationship today — go beyond small talk', why: 'Deep connection built during good periods is available as a resource during hard ones.',
+          instructions: 'Reach out to someone you care about. Ask them something real — not "how are you" but something specific about their life you\'ve been wondering about. Stay in the conversation long enough for it to matter.', benefit: 3 },
+        { text: 'Organize something to look forward to with people you care about', why: 'Anticipation is a genuine mood regulator — having something ahead protects against dips.',
+          instructions: 'Today, make a plan with at least one person — set a date, a time, a place. It can be simple. The point is having something concrete on the calendar that involves someone else.', benefit: 2 },
+      ],
+      spiritual: [
+        { text: 'Reflect on what\'s been working and why', why: 'Articulating your own progress makes it real and more resistant to depression\'s revisionism.',
+          instructions: 'Write for 10 minutes about what has been going right lately and why. Be specific. Name the habits, the people, the decisions that contributed. You\'re creating evidence you can return to.', benefit: 3 },
+        { text: 'Do an act of service for someone who wouldn\'t expect it', why: 'Freely-given generosity at peak mood produces some of the deepest lasting satisfaction.',
+          instructions: 'Think of someone who wouldn\'t expect anything from you right now. Do something genuinely meaningful for them today — not small, if you can help it. Give generously from a place of abundance.', benefit: 3 },
+      ],
+      general: [
+        { text: 'Start the creative project you\'ve been delaying', why: 'High mood is when activation energy is lowest — this is the moment to begin.',
+          instructions: 'Name the project. Open whatever it needs. Start with the hardest part first. Give it 30 minutes of real effort.', benefit: 3 },
+        { text: 'Deepen a relationship today — go beyond small talk', why: 'Deep connection during good periods becomes a resource during difficult ones.',
+          instructions: 'Reach out to someone. Ask something real. Stay in it long enough for it to matter.', benefit: 3 },
+        { text: 'Reflect on what\'s been working and why', why: 'Articulating your own progress makes it real and durable.',
+          instructions: 'Write for 10 minutes about what has been going right and why. Be specific. Name the habits, people, and decisions.', benefit: 3 },
+      ],
+    },
+  };
+
+  /* ---- Storage helpers ---- */
+  function load(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+    catch { return fallback; }
+  }
+  function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+  function loadEntries() { return load(KEYS.entries, []); }
+  function loadWins()    { return load(KEYS.wins, []); }
+  function loadBadges()  { return load(KEYS.badges, []); }
+  function loadPref()    { return load(KEYS.pref, 'general'); }
+  function todayKey()    { return new Date().toISOString().slice(0, 10); }
+  function hasLoggedToday(entries) { return entries.some(e => e.date.slice(0,10) === todayKey()); }
+
+  /* Daily counters */
+  function getDailyVal(name)      { return load('momentum_' + name + '_' + todayKey(), 0); }
+  function incDailyVal(name)      { save('momentum_' + name + '_' + todayKey(), getDailyVal(name) + 1); }
+  function getActivityCount()     { return getDailyVal('actcount'); }
+  function getRerollCount()       { return getDailyVal('rerolls'); }
+  function incActivityCount()     { incDailyVal('actcount'); }
+  function incRerollCount()       { incDailyVal('rerolls'); }
+
+  /* Pick a random unused activity */
+  function pickActivity(mood) {
+    const pref = loadPref();
+    const pool = (ACTIVITIES[mood][pref] || ACTIVITIES[mood].general)
+      .filter(a => !shownActivities.includes(a.text));
+    if (pool.length > 0) return pool[Math.floor(Math.random() * pool.length)];
+    const fallback = ACTIVITIES[mood].general.filter(a => !shownActivities.includes(a.text));
+    return fallback.length > 0 ? fallback[0] : ACTIVITIES[mood].general[0];
+  }
+
+  /* ---- Check-in ---- */
+  function selectMood(n) {
+    selectedMood = n;
+    [1,2,3,4,5].forEach(i => document.getElementById('m'+i).classList.remove('selected'));
+    document.getElementById('m'+n).classList.add('selected');
+    document.getElementById('submitBtn').disabled = false;
+  }
+
+  function submitCheckin() {
+    const entries = loadEntries();
+    if (hasLoggedToday(entries)) return;
+    const entry = { mood: selectedMood, note: document.getElementById('note').value.trim(), date: new Date().toISOString() };
+    const isFirst = entries.length === 0;
+    entries.unshift(entry);
+    save(KEYS.entries, entries);
+    checkMilestones(entries);
+    renderAll(entries);
+    renderCheckinDone(entry, isFirst);
+  }
+
+  function renderCheckinDone(entry, isFirst) {
+    shownActivities = [];
+    const activity = pickActivity(entry.mood);
+    shownActivities.push(activity.text);
+
+    let html = `
+      <div class="logged-state">
+        <div class="logged-score">${entry.mood} / 5</div>
+        <div class="logged-word">${MOOD_WORDS[entry.mood]}</div>
+        ${entry.note ? `<div class="logged-note">"${entry.note}"</div>` : ''}
+      </div>
+      <div class="activity-wrap">
+        ${buildActivityCard(activity, entry.mood, false)}
+      </div>`;
+
+    if (isFirst) {
+      html += `
+        <div class="onboard-card">
+          <div class="onboard-label">Quick question</div>
+          <div class="onboard-q">What type of activities tend to help you most?</div>
+          <div class="pref-row">
+            <button class="pref-btn" onclick="setPref('physical',this)">Physical</button>
+            <button class="pref-btn" onclick="setPref('creative',this)">Creative</button>
+            <button class="pref-btn" onclick="setPref('social',this)">Social</button>
+            <button class="pref-btn" onclick="setPref('spiritual',this)">Spiritual</button>
+          </div>
+        </div>`;
+    }
+
+    document.getElementById('checkinContent').innerHTML = html;
+  }
+
+  /* Build activity card HTML — two states: selecting vs committed */
+  function buildActivityCard(activity, mood, committed) {
+    const rerollsLeft = MAX_REROLLS - getRerollCount();
+    const dots = [1,2,3].map(i =>
+      `<div class="benefit-dot ${i <= activity.benefit ? 'filled' : ''}"></div>`).join('');
+
+    if (!committed) {
+      const rerollDisabled = rerollsLeft <= 0 ? 'disabled' : '';
+      const rerollLabel = rerollsLeft > 0
+        ? `Try another <span style="opacity:0.6;font-size:11px">(${rerollsLeft} left)</span>`
+        : `Try another <span style="opacity:0.6;font-size:11px">(none left)</span>`;
+      return `
+        <div class="activity-card" id="actCard">
+          <div class="activity-label">Suggested activity</div>
+          <div class="activity-title">${activity.text}</div>
+          <div class="activity-why">${activity.why}</div>
+          <div class="benefit-row">
+            <span class="benefit-label">Impact</span>
+            <div class="benefit-dots">${dots}</div>
+          </div>
+          <div class="act-row">
+            <button class="act-btn primary" onclick="commitToActivity(${mood}, '${escAttr(activity.text)}')">Select this activity</button>
+            <button class="act-btn" onclick="rerollActivity(${mood})" ${rerollDisabled}>${rerollLabel}</button>
+          </div>
+        </div>`;
+    } else {
+      return `
+        <div class="activity-card" id="actCard">
+          <div class="activity-label">Your activity</div>
+          <div class="activity-title">${activity.text}</div>
+          <div class="activity-divider"></div>
+          <div class="activity-instructions-label">How to do it</div>
+          <div class="activity-instructions">${activity.instructions}</div>
+          <div class="benefit-row">
+            <span class="benefit-label">Impact</span>
+            <div class="benefit-dots">${dots}</div>
+          </div>
+          <button class="act-btn primary" style="width:100%;margin-top:4px" onclick="markActivityDone(${mood}, ${activity.benefit})">I did this</button>
+        </div>`;
+    }
+  }
+
+  function escAttr(str) { return str.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+  /* Commit to an activity — expand to show instructions */
+  function commitToActivity(mood, actText) {
+    const allPool = Object.values(ACTIVITIES[mood]).flat();
+    const activity = allPool.find(a => a.text === actText) || pickActivity(mood);
+    const wrap = document.querySelector('.activity-wrap');
+    if (!wrap) return;
+    const card = document.getElementById('actCard');
+    if (card) {
+      card.classList.add('fading');
+      setTimeout(() => {
+        wrap.innerHTML = buildActivityCard(activity, mood, true);
+      }, 360);
+    }
+  }
+
+  /* Reroll — show a new activity */
+  function rerollActivity(mood) {
+    if (getRerollCount() >= MAX_REROLLS) return;
+    incRerollCount();
+    const activity = pickActivity(mood);
+    shownActivities.push(activity.text);
+    const wrap = document.querySelector('.activity-wrap');
+    if (!wrap) return;
+    const card = document.getElementById('actCard');
+    if (card) {
+      card.classList.add('fading');
+      setTimeout(() => {
+        wrap.innerHTML = buildActivityCard(activity, mood, false);
+      }, 360);
+    }
+  }
+
+  /* Log completion — store benefit, nudge trajectory, show next option */
+  function markActivityDone(mood, benefit) {
+    incActivityCount();
+    save('momentum_actbenefit_' + todayKey(), benefit);
+    showToast('Activity logged. That counts.');
+    renderChart(loadEntries());
+
+    const wrap = document.querySelector('.activity-wrap');
+    if (!wrap) return;
+    const card = document.getElementById('actCard');
+    if (card) {
+      card.classList.add('fading');
+      setTimeout(() => {
+        const count = getActivityCount();
+        if (count < MAX_ACTIVITIES) {
+          wrap.innerHTML = `
+            <div class="do-another-wrap">
+              <button class="do-another-btn" onclick="showNextActivity(${mood})">Do another activity?</button>
+            </div>`;
+        } else {
+          wrap.innerHTML = `<p class="activity-done-msg">That's enough for today. Rest counts too.</p>`;
+        }
+      }, 360);
+    }
+  }
+
+  /* Show a new activity after completing one */
+  function showNextActivity(mood) {
+    const activity = pickActivity(mood);
+    shownActivities.push(activity.text);
+    const wrap = document.querySelector('.activity-wrap');
+    if (!wrap) return;
+    wrap.innerHTML = buildActivityCard(activity, mood, false);
+  }
+
+  /* Preference */
+  function setPref(pref, btn) {
+    document.querySelectorAll('.pref-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    save(KEYS.pref, pref);
+    showToast('Preference saved — activities updated.');
+    setTimeout(() => { const o = document.querySelector('.onboard-card'); if (o) o.style.display = 'none'; }, 1200);
+  }
+
+  /* ---- Wins ---- */
+  function addWin() {
+    const input = document.getElementById('winInput');
+    const text  = input.value.trim();
+    if (!text) return;
+    const wins = loadWins();
+    wins.unshift({ text, date: new Date().toISOString() });
+    save(KEYS.wins, wins.slice(0, 50));
+    input.value = '';
+    renderWins();
+    showToast('Win logged.');
+  }
+
+  function renderWins() {
+    const wins = loadWins();
+    const list = document.getElementById('winsList');
+    if (wins.length === 0) {
+      list.innerHTML = '<p class="wins-empty">No wins yet — start small. Anything counts.</p>';
+      return;
+    }
+    list.innerHTML = wins.slice(0, 8).map(w => {
+      const d = new Date(w.date).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+      return `<div class="win-item">
+        <span class="win-icon">✦</span>
+        <div><div class="win-text">${w.text}</div><div class="win-date">${d}</div></div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ---- Milestones ---- */
+  function checkMilestones(entries) {
+    const earned = loadBadges();
+    MILESTONES.forEach(m => {
+      if (entries.length >= m.threshold && !earned.includes(m.id)) {
+        earned.push(m.id);
+        setTimeout(() => showToast(m.icon + '  Milestone: ' + m.name), 700);
+      }
+    });
+    save(KEYS.badges, earned);
+  }
+
+  function renderBadges() {
+    const earned = loadBadges();
+    document.getElementById('badgesGrid').innerHTML = MILESTONES.map(m => {
+      const e = earned.includes(m.id);
+      return `<div class="badge ${e ? 'earned' : ''}">
+        <span class="badge-icon" style="opacity:${e ? 1 : 0.18}">${m.icon}</span>
+        <span class="badge-name">${m.name}</span>
+      </div>`;
+    }).join('');
+  }
+
+  /* ---- Stats ---- */
+  function renderStats(entries) {
+    document.getElementById('totalCount').textContent = entries.length;
+    const d30 = new Date(); d30.setDate(d30.getDate() - 29);
+    const last30 = entries.filter(e => new Date(e.date) >= d30).length;
+    document.getElementById('consistencyScore').textContent = Math.round((last30 / 30) * 100) + '%';
+    const d7 = new Date(); d7.setDate(d7.getDate() - 6);
+    const last7 = entries.filter(e => new Date(e.date) >= d7);
+    document.getElementById('avgMood').textContent = last7.length
+      ? (last7.reduce((s,e) => s + e.mood, 0) / last7.length).toFixed(1) : '—';
+  }
+
+  /* ---- Chart with zones + benefit-weighted projection ---- */
+  function renderChart(entries) {
+    const canvas   = document.getElementById('moodChart');
+    const ctx      = canvas.getContext('2d');
+    const labelsEl = document.getElementById('chartLabels');
+    const totalDays = 14;
+
+    const days = [], labels = [];
+    for (let i = totalDays - 1; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const key   = d.toISOString().slice(0, 10);
+      const entry = entries.find(e => e.date.slice(0,10) === key);
+      days.push(entry ? entry.mood : null);
+      labels.push(i % 2 === 0 ? d.toLocaleDateString('en-US', { weekday: 'short' }) : '');
+    }
+
+    labelsEl.innerHTML = labels.map(l => `<span class="chart-label">${l}</span>`).join('');
+
+    const W = canvas.offsetWidth || 460;
+    const H = 150;
+    canvas.width = W; canvas.height = H;
+    ctx.clearRect(0, 0, W, H);
+
+    const padL = 8, padR = 8, padT = 10, padB = 10;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+    const step   = chartW / (totalDays - 1);
+
+    function moodToY(m) { return padT + chartH - ((m - 1) / 4) * chartH; }
+
+    const yGreenBot  = moodToY(3.5);
+    const yYellowBot = moodToY(2.5);
+
+    ctx.fillStyle = 'rgba(216,243,220,0.45)';
+    ctx.fillRect(padL, padT, chartW, yGreenBot - padT);
+    ctx.fillStyle = 'rgba(255,249,219,0.55)';
+    ctx.fillRect(padL, yGreenBot, chartW, yYellowBot - yGreenBot);
+    ctx.fillStyle = 'rgba(255,227,227,0.45)';
+    ctx.fillRect(padL, yYellowBot, chartW, padT + chartH - yYellowBot);
+
+    ctx.strokeStyle = 'rgba(200,200,200,0.4)'; ctx.lineWidth = 0.5;
+    [yGreenBot, yYellowBot].forEach(y => {
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    });
+
+    const realPts = days.map((v, i) => ({ x: padL + i * step, y: v !== null ? moodToY(v) : null }));
+    const filled  = realPts.filter(p => p.y !== null);
+
+    if (filled.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(filled[0].x, padT + chartH);
+      filled.forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.lineTo(filled[filled.length-1].x, padT + chartH);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(45,106,79,0.08)'; ctx.fill();
+
+      ctx.beginPath();
+      filled.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+      ctx.strokeStyle = '#2d6a4f'; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+    }
+
+    /* Projection — weighted regression + activity benefit nudge */
+    if (filled.length >= 3) {
+      const n = filled.length;
+      const weights = filled.map((_, i) => 0.5 + 0.5 * (i / (n - 1)));
+      const totalW  = weights.reduce((s,w) => s+w, 0);
+      const wMeanX  = filled.reduce((s,p,i) => s + weights[i] * p.x, 0) / totalW;
+      const wMeanY  = filled.reduce((s,p,i) => s + weights[i] * p.y, 0) / totalW;
+      const num     = filled.reduce((s,p,i) => s + weights[i] * (p.x - wMeanX) * (p.y - wMeanY), 0);
+      const den     = filled.reduce((s,p,i) => s + weights[i] * (p.x - wMeanX) ** 2, 0);
+      let slope     = den !== 0 ? num / den : 0;
+
+      /* Benefit nudge — upward bias on projection based on today's logged activity */
+      const todayBenefit = load('momentum_actbenefit_' + todayKey(), 0);
+      if (todayBenefit > 0) {
+        const nudge = (todayBenefit / 3) * 0.012; /* benefit 3 = stronger upward tilt */
+        slope -= nudge; /* negative because Y increases downward on canvas */
+      }
+
+      const lastPt = filled[filled.length - 1];
+      const projDays = 7;
+      const endX = lastPt.x + projDays * step;
+      let   endY = lastPt.y + slope * projDays * step;
+      endY = Math.max(padT, Math.min(padT + chartH, endY));
+
+      ctx.save();
+      ctx.setLineDash([4, 5]);
+      ctx.strokeStyle = 'rgba(150,150,150,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(lastPt.x, lastPt.y); ctx.lineTo(endX, endY); ctx.stroke();
+      ctx.restore();
+
+      ctx.beginPath(); ctx.arc(endX, endY, 3, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(150,150,150,0.3)'; ctx.fill();
+    }
+
+    filled.forEach(p => {
+      ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fillStyle = '#2d6a4f'; ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
+    });
+  }
+
+  /* ---- Calendar ---- */
+  function renderCalendar(entries) {
+    const map = {};
+    entries.forEach(e => { map[e.date.slice(0,10)] = e.mood; });
+    let html = '';
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const key  = d.toISOString().slice(0,10);
+      const mood = map[key];
+      const cls  = ['cal-day', mood ? 'm'+mood : '', i===0 ? 'today' : ''].filter(Boolean).join(' ');
+      html += `<div class="${cls}" title="${key}"></div>`;
+    }
+    document.getElementById('calGrid').innerHTML = html;
+  }
+
+  /* ---- Toast ---- */
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  /* ---- Init ---- */
+  function renderAll(entries) {
+    renderStats(entries);
+    renderChart(entries);
+    renderCalendar(entries);
+    renderBadges();
+  }
+
+  const entries = loadEntries();
+  renderAll(entries);
+  renderWins();
+
+  if (hasLoggedToday(entries)) {
+    const todayEntry = entries.find(e => e.date.slice(0,10) === todayKey());
+    if (todayEntry) renderCheckinDone(todayEntry, false);
+  }
+
+  window.addEventListener('resize', () => renderChart(loadEntries()));
+
+  // Register service worker for PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('Momentum: service worker registered'))
+      .catch(err => console.log('Momentum: SW registration failed', err));
+  }
+
+</script>
+</body>
+</html>

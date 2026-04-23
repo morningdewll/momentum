@@ -74,27 +74,24 @@ function paintCheckin(entries) {
   const card = $('#checkin-card');
   const wrap = $('#activity-wrap');
 
-  renderCheckin(card, {
+  const wasEmpty = entries.length === 0;
+
+  const bindCheckin = (isFresh) => renderCheckin(card, {
     onSubmit: (entry) => {
-      paintAfterSubmit(entry, entries.length === 0);
+      const hadZeroBefore = isFresh;
+      bindCheckin(false);
+      paintAfterSubmit(entry, hadZeroBefore);
       paintGraph(getEntries());
       renderCalendar($('#cal-root'), getEntries());
       paintConsistency(getEntries());
     },
     onEdit: () => {
-      const card = $('#checkin-card');
-      const wrap = $('#activity-wrap');
       wrap.innerHTML = '';
-      renderCheckin(card, {
-        onSubmit: (entry) => {
-          paintAfterSubmit(entry, false);
-          paintGraph(getEntries());
-          renderCalendar($('#cal-root'), getEntries());
-          paintConsistency(getEntries());
-        },
-      });
+      bindCheckin(false);
     },
   });
+
+  bindCheckin(wasEmpty);
 
   if (hasEntryToday()) {
     const today = todayEntry();

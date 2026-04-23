@@ -1,0 +1,70 @@
+:root {
+  --bg: #eef3f5;
+  --surface: rgba(255, 255, 255, 0.55);
+  --surface-strong: rgba(255, 255, 255, 0.75);
+  --surface-muted: rgba(255, 255, 255, 0.4);
+  --ink: #1e3a4c;
+  --ink-soft: #253742;
+  --muted: #7f97a4;
+  --muted-soft: #a8bac4;
+  --line: rgba(30, 58, 76, 0.08);
+  --line-strong: rgba(30, 58, 76, 0.16);
+  --accent: #2d6a4f;
+  --warn: #a94545;
+
+  --zone-thriving: rgba(180, 215, 190, 0.25);
+  --zone-watch:    rgba(230, 220, 170, 0.28);
+  --zone-struggle: rgba(210, 170, 170, 0.25);
+
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  --fs-display: 40px;
+  --fs-xl: 28px;
+  --fs-lg: 20px;
+  --fs-md: 15px;
+  --fs-sm: 13px;
+  --fs-xs: 11px;
+  --fs-micro: 10px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  --shadow-soft: 0 2px 20px rgba(30, 58, 76, 0.04);
+  --shadow-lift: 0 4px 28px rgba(30, 58, 76, 0.08);
+
+  --ease: cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+
+/*
+  Future Dusk dark mode — token swap only, not active.
+  To activate: add [data-theme="dusk"] to <html> and uncomment.
+
+  [data-theme="dusk"] {
+    --bg: #161a20;
+    --surface: #1f2530;
+    --surface-strong: #242c39;
+    --surface-muted: #1a1f28;
+    --ink: #e8dfcf;
+    --ink-soft: #d4d1cb;
+    --muted: #8b7c65;
+    --muted-soft: #7a7269;
+    --line: rgba(232, 223, 207, 0.08);
+    --line-strong: rgba(232, 223, 207, 0.16);
+    --accent: #c9a86b;
+    --warn: #c98080;
+    --zone-thriving: rgba(150, 180, 160, 0.12);
+    --zone-watch:    rgba(200, 180, 130, 0.14);
+    --zone-struggle: rgba(180, 120, 120, 0.12);
+  }
+*/

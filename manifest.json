@@ -1,11 +1,11 @@
 {
-  "name": "Momentum",
-  "short_name": "Momentum",
-  "description": "Track your mood. See your progress.",
+  "name": "Ebb",
+  "short_name": "Ebb",
+  "description": "mood has rhythm. watch yours.",
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#f7f7f5",
-  "theme_color": "#1a1a1a",
+  "background_color": "#eef3f5",
+  "theme_color": "#1e3a4c",
   "orientation": "portrait",
   "icons": [
     {
